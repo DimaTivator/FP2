@@ -19,5 +19,5 @@
  (name FP2)
  (synopsis "FP lab 2")
  (description "RBSet implementation")
- (depends ocaml dune base (ounit2 :with-test)))
+ (depends ocaml dune base alcotest))
 

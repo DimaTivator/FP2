@@ -1,69 +1,69 @@
-name: CI
+name: Builds, tests & co
 
 on:
   - push
   - pull_request
 
-permissions:
-  checks: write
-  pull-requests: write
+permissions: read-all
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 4
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout tree
         uses: actions/checkout@v4
+
       - name: Set-up OCaml
         uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-compiler: 4
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
       # - run: opam install . --deps-only --with-test
-      - run: opam install base stdio ounit.2.2.7 ocamlformat dune -y
+      - run: opam install base stdio alcotest dune -y
+
       - run: opam exec -- dune build
-
-      - name: Run tests
-        run: opam exec -- dune runtest
-        env:
-          REPORT_PATH: ${{github.workspace}}/_build/report.xml
-
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action/linux@v2
-        if: always()
-        with:
-          report_individual_runs: true
-          files: |
-            ${{github.workspace}}/_build/report.xml
-
-  lint-doc:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 4
-      - uses: ocaml/setup-ocaml/lint-doc@v3
-
-  lint-fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 4
-      - uses: ocaml/setup-ocaml/lint-fmt@v3
+      - run: opam exec -- dune runtest --verbose
 
   lint-opam:
-    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 4
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout tree
         uses: actions/checkout@v4
+
       - name: Set-up OCaml
         uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-compiler: 5
-      - uses: ocaml/setup-ocaml/lint-opam@v3
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+      
+      - run: opam install zanuda.1.0.0 -y
+
+      - run: opam exec -- zanuda ./bin/*.ml ./test/*.ml 
+
