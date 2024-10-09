@@ -7,9 +7,7 @@ module Rbset = struct
   let rec member x = function
     | Empty -> false
     | Node (_, left, y, right) ->
-        if x < y then member x left
-        else if x > y then member x right
-        else true
+        if x < y then member x left else if x > y then member x right else true
 
   let balance = function
     | Black, Node (Red, Node (Red, a, x, b), y, c), z, d

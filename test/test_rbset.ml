@@ -19,12 +19,12 @@ let test_insert_multiple _ =
 
 let test_to_list _ =
   let tree = Rbset.insert 3 (Rbset.insert 1 (Rbset.insert 2 Rbset.empty)) in
-  assert_equal [1; 2; 3] (Rbset.to_list tree)
+  assert_equal [ 1; 2; 3 ] (Rbset.to_list tree)
 
 let test_insert_duplicates _ =
   let tree = Rbset.insert 1 (Rbset.insert 1 Rbset.empty) in
   assert_equal true (Rbset.member 1 tree);
-  assert_equal [1] (Rbset.to_list tree)
+  assert_equal [ 1 ] (Rbset.to_list tree)
 
 let test_insert_large_numbers _ =
   let tree = Rbset.insert 1000000 (Rbset.insert (-1000000) Rbset.empty) in
@@ -34,18 +34,18 @@ let test_insert_large_numbers _ =
 
 let test_insert_order _ =
   let tree = Rbset.insert 2 (Rbset.insert 1 (Rbset.insert 3 Rbset.empty)) in
-  assert_equal [1; 2; 3] (Rbset.to_list tree);
+  assert_equal [ 1; 2; 3 ] (Rbset.to_list tree);
   let tree = Rbset.insert 3 (Rbset.insert 2 (Rbset.insert 1 Rbset.empty)) in
-  assert_equal [1; 2; 3] (Rbset.to_list tree)
+  assert_equal [ 1; 2; 3 ] (Rbset.to_list tree)
 
 let suite =
-  "Rbset Tests" >::: [
-    "test_empty" >:: test_empty;
-    "test_insert" >:: test_insert;
-    "test_insert_multiple" >:: test_insert_multiple;
-    "test_to_list" >:: test_to_list;
-    "test_insert_duplicates" >:: test_insert_duplicates;
-    "test_insert_large_numbers" >:: test_insert_large_numbers;
-    "test_insert_order" >:: test_insert_order;
-  ]
-  
+  "Rbset Tests"
+  >::: [
+         "test_empty" >:: test_empty;
+         "test_insert" >:: test_insert;
+         "test_insert_multiple" >:: test_insert_multiple;
+         "test_to_list" >:: test_to_list;
+         "test_insert_duplicates" >:: test_insert_duplicates;
+         "test_insert_large_numbers" >:: test_insert_large_numbers;
+         "test_insert_order" >:: test_insert_order;
+       ]
