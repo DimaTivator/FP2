@@ -19,6 +19,7 @@ jobs:
         with:
           ocaml-compiler: 4
       - run: opam install . --deps-only --with-test
+      # - run: opam install base stdio ounit.2.2.7 dune -y
       - run: opam exec -- dune build
 
       - name: Run tests

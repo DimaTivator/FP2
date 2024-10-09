@@ -7,20 +7,17 @@
 (source
  (github username/reponame))
 
-(authors "Author Name")
+(authors "Dmitrii Andriianov")
 
-(maintainers "Maintainer Name")
+(maintainers "Dmitrii Andriianov")
 
-(license LICENSE)
+(license MIT)
 
 (documentation https://url/to/documentation)
 
 (package
  (name FP2)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml dune)
- (tags
-  (topics "to describe" your project)))
+ (synopsis "FP lab 2")
+ (description "RBSet implementation")
+ (depends ocaml dune base (ounit2 :with-test)))
 
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
