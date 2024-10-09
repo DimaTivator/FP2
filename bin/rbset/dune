@@ -1,0 +1,4 @@
+(library
+ (name rbset)
+ (modules rbset)
+ (libraries base))
