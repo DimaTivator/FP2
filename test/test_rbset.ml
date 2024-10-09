@@ -52,7 +52,7 @@ let test_insert_mixed_numbers () =
   check bool "set contains 1" true (Rbset.member 1 tree);
   check bool "set does not contain 2" false (Rbset.member 2 tree)
 
-let () =
+let run_tests =
   let open Alcotest in
   run "Rbset Tests"
     [
