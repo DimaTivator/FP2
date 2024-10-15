@@ -241,9 +241,9 @@ let test_monoid_identity () =
 ;;
 
 let test_monoid_associativity () =
-  let t1 = Rbset.empty |> Rbset.insert 1 in
-  let t2 = Rbset.empty |> Rbset.insert 2 in
-  let t3 = Rbset.empty |> Rbset.insert 3 in
+  let t1 = Rbset.empty |> Rbset.insert 1 |> Rbset.insert 5 |> Rbset.insert 14 in
+  let t2 = Rbset.empty |> Rbset.insert 2 |> Rbset.insert (-2) |> Rbset.insert (-5) in
+  let t3 = Rbset.empty |> Rbset.insert 3 |> Rbset.insert 5 in
   let union1 = Rbset.union t1 (Rbset.union t2 t3) in
   let union2 = Rbset.union (Rbset.union t1 t2) t3 in
   check (list int) "union is associative" (Rbset.to_list union1) (Rbset.to_list union2)
