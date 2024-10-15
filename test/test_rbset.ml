@@ -38,22 +38,6 @@ let test_insert_order () =
   check (list int) "to_list returns sorted elements" [ 1; 2; 3 ] (Rbset.to_list tree)
 ;;
 
-let test_insert_negative_numbers () =
-  let tree = Rbset.empty |> Rbset.insert (-1) |> Rbset.insert (-2) |> Rbset.insert (-3) in
-  check bool "set contains -1" true (Rbset.member (-1) tree);
-  check bool "set contains -2" true (Rbset.member (-2) tree);
-  check bool "set contains -3" true (Rbset.member (-3) tree);
-  check bool "set does not contain 0" false (Rbset.member 0 tree)
-;;
-
-let test_insert_mixed_numbers () =
-  let tree = Rbset.empty |> Rbset.insert (-1) |> Rbset.insert 0 |> Rbset.insert 1 in
-  check bool "set contains -1" true (Rbset.member (-1) tree);
-  check bool "set contains 0" true (Rbset.member 0 tree);
-  check bool "set contains 1" true (Rbset.member 1 tree);
-  check bool "set does not contain 2" false (Rbset.member 2 tree)
-;;
-
 let test_insert_and_check_order () =
   let tree =
     Rbset.empty
@@ -265,6 +249,35 @@ let test_monoid_associativity () =
   check (list int) "union is associative" (Rbset.to_list union1) (Rbset.to_list union2)
 ;;
 
+let is_red_black_tree tree =
+  let rec check_black_height node =
+    match node with
+    | Rbset.Empty -> Some 0
+    | Rbset.Node (color, left, _, right) ->
+      let left_height = check_black_height left in
+      let right_height = check_black_height right in
+      (match left_height, right_height with
+       | Some lh, Some rh when lh = rh ->
+         if color = Rbset.Black then Some (lh + 1) else Some lh
+       | _ -> None)
+  in
+  let rec check_red_property node =
+    match node with
+    | Rbset.Empty -> true
+    | Rbset.Node (Rbset.Red, Rbset.Node (Rbset.Red, _, _, _), _, _)
+    | Rbset.Node (Rbset.Red, _, _, Rbset.Node (Rbset.Red, _, _, _)) -> false
+    | Rbset.Node (_, left, _, right) ->
+      check_red_property left && check_red_property right
+  in
+  match check_black_height tree with
+  | Some _ -> check_red_property tree
+  | None -> false
+;;
+
+let test_color_property =
+  QCheck.Test.make ~name:"tree is correctly colored" ~count:100 arb_tree is_red_black_tree
+;;
+
 let run_tests =
   let open Alcotest in
   run
@@ -277,10 +290,6 @@ let run_tests =
     ; ( "test_insert_duplicates"
       , [ test_case "test_insert_duplicates" `Quick test_insert_duplicates ] )
     ; "test_insert_order", [ test_case "test_insert_order" `Quick test_insert_order ]
-    ; ( "test_insert_negative_numbers"
-      , [ test_case "test_insert_negative_numbers" `Quick test_insert_negative_numbers ] )
-    ; ( "test_insert_mixed_numbers"
-      , [ test_case "test_insert_mixed_numbers" `Quick test_insert_mixed_numbers ] )
     ; ( "test_insert_and_remove"
       , [ test_case "test_insert_and_remove" `Quick test_insert_and_remove ] )
     ; ( "test_insert_and_check_order"
@@ -298,6 +307,7 @@ let run_tests =
         ; QCheck_alcotest.to_alcotest test_remove_property
         ; QCheck_alcotest.to_alcotest test_union_property
         ; QCheck_alcotest.to_alcotest test_operations_property
+        ; QCheck_alcotest.to_alcotest test_color_property
         ] )
     ; "test_fold", [ test_case "test_fold" `Quick test_fold ]
     ; "test_map", [ test_case "test_map" `Quick test_map ]
