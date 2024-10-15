@@ -88,4 +88,31 @@ module Rbset = struct
     | Empty -> []
     | Node (_, left, value, right) -> to_list left @ (value :: to_list right)
   ;;
+
+  (* Filter tree values based on predicate f*)
+  let rec filter f = function
+    | Empty -> Empty
+    | Node (color, left, value, right) ->
+      let left' = filter f left in
+      let right' = filter f right in
+      if f value then balance (color, left', value, right') else union left' right'
+  ;;
+
+  (* Apply function f to each value in tree *)
+  let rec map f = function
+    | Empty -> Empty
+    | Node (_, left, value, right) ->
+      let left' = map f left in
+      let right' = map f right in
+      insert (f value) (union left' right')
+  ;;
+
+  (* Traverse tree and accumulate its values using the provided function f*)
+  let rec fold f acc = function
+    | Empty -> acc
+    | Node (_, left, value, right) ->
+      let acc' = fold f acc left in
+      let acc'' = f acc' value in
+      fold f acc'' right
+  ;;
 end

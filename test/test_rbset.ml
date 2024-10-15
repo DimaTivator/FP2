@@ -126,6 +126,30 @@ let test_remove_all () =
   check (list int) "to_list returns empty list" [] (Rbset.to_list tree)
 ;;
 
+let test_fold () =
+  let tree = Rbset.empty |> Rbset.insert 1 |> Rbset.insert 2 |> Rbset.insert 3 in
+  let sum = Rbset.fold ( + ) 0 tree in
+  check int "fold sums the elements" 6 sum;
+  let product = Rbset.fold ( * ) 1 tree in
+  check int "fold multiplies the elements" 6 product
+;;
+
+let test_map () =
+  let tree = Rbset.empty |> Rbset.insert 1 |> Rbset.insert 2 |> Rbset.insert 3 in
+  let mapped_tree = Rbset.map (fun x -> x * 2) tree in
+  check (list int) "map doubles the elements" [ 2; 4; 6 ] (Rbset.to_list mapped_tree);
+  let mapped_tree = Rbset.map (fun x -> x + 1) tree in
+  check (list int) "map increments the elements" [ 2; 3; 4 ] (Rbset.to_list mapped_tree)
+;;
+
+let test_filter () =
+  let tree = Rbset.empty |> Rbset.insert 1 |> Rbset.insert 2 |> Rbset.insert 3 in
+  let filtered_tree = Rbset.filter (fun x -> x mod 2 = 0) tree in
+  check (list int) "filter keeps even elements" [ 2 ] (Rbset.to_list filtered_tree);
+  let filtered_tree = Rbset.filter (fun x -> x > 1) tree in
+  check (list int) "filter keeps elements greater than 1" [ 2; 3 ] (Rbset.to_list filtered_tree)
+;;
+
 (* Property-based tests using QCheck *)
 let arb_tree =
   let open QCheck in
@@ -220,5 +244,8 @@ let run_tests =
         ; QCheck_alcotest.to_alcotest test_remove_property
         ; QCheck_alcotest.to_alcotest test_union_property
         ] )
+    ; "test_fold", [ test_case "test_fold" `Quick test_fold ]
+    ; "test_map", [ test_case "test_map" `Quick test_map ]
+    ; "test_filter", [ test_case "test_filter" `Quick test_filter ]
     ]
 ;;
