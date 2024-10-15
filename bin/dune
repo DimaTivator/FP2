@@ -1,6 +1,6 @@
 (executable
  (public_name FP2)
  (name main)
- (libraries FP2 base rbset)
+ (libraries FP2 base stdio rbset)
  (flags
   (:standard -ccopt -Wl,-undefined,dynamic_lookup)))
