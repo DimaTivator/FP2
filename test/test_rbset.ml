@@ -147,7 +147,7 @@ let arb_tree =
     | _ ->
       Gen.frequency
         [ 1, Gen.return Rbset.empty
-        ; 3, Gen.map2 (fun x t -> Rbset.insert x t) Gen.int (gen_tree (n / 2))
+        ; 3, Gen.map2 (fun x t -> Rbset.insert x t) Gen.int (gen_tree (n - 1))
         ]
   in
   make ~print:(fun tree -> Print.(list int) (Rbset.to_list tree)) (gen_tree 10)
