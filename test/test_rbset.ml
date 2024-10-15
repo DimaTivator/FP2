@@ -147,16 +147,20 @@ let test_filter () =
   let filtered_tree = Rbset.filter (fun x -> x mod 2 = 0) tree in
   check (list int) "filter keeps even elements" [ 2 ] (Rbset.to_list filtered_tree);
   let filtered_tree = Rbset.filter (fun x -> x > 1) tree in
-  check (list int) "filter keeps elements greater than 1" [ 2; 3 ] (Rbset.to_list filtered_tree)
+  check
+    (list int)
+    "filter keeps elements greater than 1"
+    [ 2; 3 ]
+    (Rbset.to_list filtered_tree)
 ;;
 
 (* Property-based tests using QCheck *)
 let arb_tree =
   let open QCheck in
   let rec gen_tree n =
-    if n = 0
-    then Gen.return Rbset.empty
-    else
+    match n with
+    | 0 -> Gen.return Rbset.empty
+    | _ ->
       Gen.frequency
         [ 1, Gen.return Rbset.empty
         ; 3, Gen.map2 (fun x t -> Rbset.insert x t) Gen.int (gen_tree (n / 2))
@@ -185,6 +189,56 @@ let test_union_property =
       let union_tree = Rbset.union t1 t2 in
       List.for_all (fun x -> Rbset.member x union_tree) (Rbset.to_list t1)
       && List.for_all (fun x -> Rbset.member x union_tree) (Rbset.to_list t2))
+;;
+
+module IntSet = Set.Make (Int)
+
+(* Property-based tests comparing with built-in Set *)
+
+let arb_operations =
+  let open QCheck in
+  let gen_op =
+    Gen.oneof
+      [ Gen.map (fun x -> `Insert x) Gen.int
+      ; Gen.map (fun x -> `Remove x) Gen.int
+      ; Gen.return `To_list
+      ]
+  in
+  let rec gen_ops n =
+    match n with
+    | 0 -> Gen.return []
+    | _ -> Gen.map2 (fun op ops -> op :: ops) gen_op (gen_ops (n - 1))
+  in
+  make
+    ~print:(fun ops ->
+      Print.(list string)
+        (List.map
+           (function
+             | `Insert x -> "Insert " ^ string_of_int x
+             | `Remove x -> "Remove " ^ string_of_int x
+             | `To_list -> "To_list")
+           ops))
+    (gen_ops 100)
+;;
+
+let apply_operations ops =
+  let rec aux ops rbset intset =
+    match ops with
+    | [] -> rbset, intset
+    | `Insert x :: rest -> aux rest (Rbset.insert x rbset) (IntSet.add x intset)
+    | `Remove x :: rest -> aux rest (Rbset.remove x rbset) (IntSet.remove x intset)
+    | `To_list :: rest -> aux rest rbset intset
+  in
+  aux ops Rbset.empty IntSet.empty
+;;
+
+let test_operations_property =
+  QCheck.Test.make
+    ~name:"operations produce same result as built-in set"
+    arb_operations
+    (fun ops ->
+       let rbset, intset = apply_operations ops in
+       Rbset.to_list rbset = IntSet.elements intset)
 ;;
 
 (* Monoid properties *)
@@ -243,6 +297,7 @@ let run_tests =
       , [ QCheck_alcotest.to_alcotest test_insert_property
         ; QCheck_alcotest.to_alcotest test_remove_property
         ; QCheck_alcotest.to_alcotest test_union_property
+        ; QCheck_alcotest.to_alcotest test_operations_property
         ] )
     ; "test_fold", [ test_case "test_fold" `Quick test_fold ]
     ; "test_map", [ test_case "test_map" `Quick test_map ]
