@@ -126,6 +126,67 @@ let test_remove_all () =
   check (list int) "to_list returns empty list" [] (Rbset.to_list tree)
 ;;
 
+(* Property-based tests using QCheck *)
+let arb_tree =
+  let open QCheck in
+  let rec gen_tree n =
+    if n = 0
+    then Gen.return Rbset.empty
+    else
+      Gen.frequency
+        [ 1, Gen.return Rbset.empty
+        ; 3, Gen.map2 (fun x t -> Rbset.insert x t) Gen.int (gen_tree (n / 2))
+        ]
+  in
+  make ~print:(fun tree -> Print.(list int) (Rbset.to_list tree)) (gen_tree 10)
+;;
+
+let test_insert_property =
+  QCheck.Test.make ~name:"inserted element is a member" arb_tree (fun tree ->
+    let x = QCheck.Gen.generate1 QCheck.Gen.int in
+    Rbset.member x (Rbset.insert x tree))
+;;
+
+let test_remove_property =
+  QCheck.Test.make ~name:"removed element is not a member" arb_tree (fun tree ->
+    let x = QCheck.Gen.generate1 QCheck.Gen.int in
+    not (Rbset.member x (Rbset.remove x tree)))
+;;
+
+let test_union_property =
+  QCheck.Test.make
+    ~name:"union contains all elements"
+    QCheck.(pair arb_tree arb_tree)
+    (fun (t1, t2) ->
+      let union_tree = Rbset.union t1 t2 in
+      List.for_all (fun x -> Rbset.member x union_tree) (Rbset.to_list t1)
+      && List.for_all (fun x -> Rbset.member x union_tree) (Rbset.to_list t2))
+;;
+
+(* Monoid properties *)
+let test_monoid_identity () =
+  let tree = Rbset.empty |> Rbset.insert 1 |> Rbset.insert 2 in
+  check
+    (list int)
+    "union with empty is identity"
+    (Rbset.to_list tree)
+    (Rbset.to_list (Rbset.union tree Rbset.empty));
+  check
+    (list int)
+    "union with empty is identity"
+    (Rbset.to_list tree)
+    (Rbset.to_list (Rbset.union Rbset.empty tree))
+;;
+
+let test_monoid_associativity () =
+  let t1 = Rbset.empty |> Rbset.insert 1 in
+  let t2 = Rbset.empty |> Rbset.insert 2 in
+  let t3 = Rbset.empty |> Rbset.insert 3 in
+  let union1 = Rbset.union t1 (Rbset.union t2 t3) in
+  let union2 = Rbset.union (Rbset.union t1 t2) t3 in
+  check (list int) "union is associative" (Rbset.to_list union1) (Rbset.to_list union2)
+;;
+
 let run_tests =
   let open Alcotest in
   run
@@ -150,5 +211,14 @@ let run_tests =
     ; ( "test_remove_nonexistent"
       , [ test_case "test_remove_nonexistent" `Quick test_remove_nonexistent ] )
     ; "test_remove_all", [ test_case "test_remove_all" `Quick test_remove_all ]
+    ; ( "monoid_properties"
+      , [ test_case "test_monoid_identity" `Quick test_monoid_identity
+        ; test_case "test_monoid_associativity" `Quick test_monoid_associativity
+        ] )
+    ; ( "property_based"
+      , [ QCheck_alcotest.to_alcotest test_insert_property
+        ; QCheck_alcotest.to_alcotest test_remove_property
+        ; QCheck_alcotest.to_alcotest test_union_property
+        ] )
     ]
 ;;
