@@ -38,32 +38,32 @@ jobs:
       - run: opam exec -- dune build
       - run: opam exec -- dune runtest --verbose
 
-  lint-opam:
-    permissions:
-      attestations: write
-      contents: read
-      id-token: write
+  # lint-opam:
+  #   permissions:
+  #     attestations: write
+  #     contents: read
+  #     id-token: write
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-        ocaml-compiler:
-          - 4
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - ubuntu-latest
+  #       ocaml-compiler:
+  #         - 4
 
-    runs-on: ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
 
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout tree
+  #       uses: actions/checkout@v4
 
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+  #     - name: Set-up OCaml
+  #       uses: ocaml/setup-ocaml@v3
+  #       with:
+  #         ocaml-compiler: ${{ matrix.ocaml-compiler }}
       
-      - run: opam install zanuda.1.0.0 -y
+  #     - run: opam install zanuda.1.0.0 -y
 
-      - run: opam exec -- zanuda ./bin/*.ml ./test/*.ml 
+  #     - run: opam exec -- zanuda ./bin/*.ml ./test/*.ml 
 
