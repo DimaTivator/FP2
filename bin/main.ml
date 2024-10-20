@@ -1,8 +1,9 @@
 open Rbset
 open Stdio
+module IntSet = Rbset (Int)
 
 let () =
-  let open Rbset in
+  let open IntSet in
   let set = empty |> remove 20 |> insert 10 |> insert 10 |> insert 20 |> insert 15 in
   print_endline (Printf.sprintf "Set contains 15: %b" (member 15 set));
   print_endline (Printf.sprintf "Set contains 25: %b" (member 25 set));

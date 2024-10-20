@@ -1,36 +1,34 @@
-module Rbset = struct
+module Rbset (Ord : sig
+    type t
+
+    val compare : t -> t -> int
+  end) =
+struct
   type color =
     | Red
     | Black
 
-  (* Polymorphic tree structure that can either be Empty or a Node
-     containing a color, left subtree, value, and right subtree *)
-  type 'a tree =
+  type tree =
     | Empty
-    | Node of color * 'a tree * 'a * 'a tree
+    | Node of color * tree * Ord.t * tree
 
   let empty = Empty
 
   let rec member x = function
     | Empty -> false
     | Node (_, left, value, right) ->
-      if x < value then member x left else if x > value then member x right else true
+      (match Ord.compare x value with
+       | cmp when cmp < 0 -> member x left
+       | cmp when cmp > 0 -> member x right
+       | _ -> true)
   ;;
 
-  (* a, b, c, d - nodes
-     x, y, z - values *)
   let balance = function
-    (* Case 1: Left-Left Red violation *)
     | Black, Node (Red, Node (Red, a, x, b), y, c), z, d
-    (* Case 2: Left-Right Red violation *)
     | Black, Node (Red, a, x, Node (Red, b, y, c)), z, d
-    (* Case 3: Right-Left Red violation *)
     | Black, a, x, Node (Red, Node (Red, b, y, c), z, d)
-    (* Case 4: Right-Right Red violation *)
     | Black, a, x, Node (Red, b, y, Node (Red, c, z, d)) ->
-      (* Rebalance by rotating and recoloring *)
       Node (Red, Node (Black, a, x, b), y, Node (Black, c, z, d))
-    (* No violation, return the node as is *)
     | color, a, x, b -> Node (color, a, x, b)
   ;;
 
@@ -38,11 +36,10 @@ module Rbset = struct
     let rec ins = function
       | Empty -> Node (Red, Empty, value, Empty)
       | Node (color, left, x, right) as tree ->
-        if value < x
-        then balance (color, ins left, x, right)
-        else if value > x
-        then balance (color, left, x, ins right)
-        else tree
+        (match Ord.compare value x with
+         | cmp when cmp < 0 -> balance (color, ins left, x, right)
+         | cmp when cmp > 0 -> balance (color, left, x, ins right)
+         | _ -> tree)
     in
     match ins tree with
     | Node (_, left, value, right) -> Node (Black, left, value, right)
@@ -60,22 +57,35 @@ module Rbset = struct
     let rec del = function
       | Empty -> Empty
       | Node (color, left, x, right) ->
-        if value < x
-        then balance (color, del left, x, right)
-        else if value > x
-        then balance (color, left, x, del right)
-        else (
-          match right with
-          | Empty -> left
-          | _ ->
-            let min, new_right = find_min right in
-            balance (color, left, min, new_right))
+        (match Ord.compare value x with
+         | cmp when cmp < 0 -> balance (color, del left, x, right)
+         | cmp when cmp > 0 -> balance (color, left, x, del right)
+         | _ ->
+           (match right with
+            | Empty -> left
+            | _ ->
+              let min, new_right = find_min right in
+              balance (color, left, min, new_right)))
     in
     match del tree with
     | Node (_, left, value, right) -> Node (Black, left, value, right)
     | Empty -> Empty
   ;;
 
+  let rec to_list = function
+    | Empty -> []
+    | Node (_, left, value, right) -> to_list left @ (value :: to_list right)
+  ;;
+
+  let rec fold f acc = function
+    | Empty -> acc
+    | Node (_, left, value, right) ->
+      let acc' = fold f acc left in
+      let acc'' = f acc' value in
+      fold f acc'' right
+  ;;
+
+  (* Fast but Non assiciative implementation *)
   let rec union t1 t2 =
     match t1, t2 with
     | Empty, t | t, Empty -> t
@@ -84,12 +94,16 @@ module Rbset = struct
       insert value1 t1'
   ;;
 
-  let rec to_list = function
-    | Empty -> []
-    | Node (_, left, value, right) -> to_list left @ (value :: to_list right)
+  let associative_union t1 t2 =
+    match t1, t2 with
+    | Empty, t | t, Empty -> t
+    | _ ->
+      let list1 = to_list t1 in
+      let list2 = to_list t2 in
+      let merged_list = List.merge Ord.compare list1 list2 in
+      List.fold_left (fun acc x -> insert x acc) empty merged_list
   ;;
 
-  (* Filter tree values based on predicate f*)
   let rec filter f = function
     | Empty -> Empty
     | Node (color, left, value, right) ->
@@ -98,7 +112,6 @@ module Rbset = struct
       if f value then balance (color, left', value, right') else union left' right'
   ;;
 
-  (* Apply function f to each value in tree *)
   let rec map f = function
     | Empty -> Empty
     | Node (_, left, value, right) ->
@@ -107,12 +120,11 @@ module Rbset = struct
       insert (f value) (union left' right')
   ;;
 
-  (* Traverse tree and accumulate its values using the provided function f*)
-  let rec fold f acc = function
-    | Empty -> acc
-    | Node (_, left, value, right) ->
-      let acc' = fold f acc left in
-      let acc'' = f acc' value in
-      fold f acc'' right
+  let rec equal t1 t2 =
+    match t1, t2 with
+    | Empty, Empty -> true
+    | Node (_, left1, value1, right1), Node (_, left2, value2, right2) ->
+      Ord.compare value1 value2 = 0 && equal left1 left2 && equal right1 right2
+    | _ -> false
   ;;
 end
