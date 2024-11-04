@@ -85,23 +85,12 @@ struct
       fold f acc'' right
   ;;
 
-  (* Fast but Non assiciative implementation *)
   let rec union t1 t2 =
     match t1, t2 with
     | Empty, t | t, Empty -> t
     | Node (_, left1, value1, right1), _ ->
       let t1' = union left1 (union right1 t2) in
       insert value1 t1'
-  ;;
-
-  let associative_union t1 t2 =
-    match t1, t2 with
-    | Empty, t | t, Empty -> t
-    | _ ->
-      let list1 = to_list t1 in
-      let list2 = to_list t2 in
-      let merged_list = List.merge Ord.compare list1 list2 in
-      List.fold_left (fun acc x -> insert x acc) empty merged_list
   ;;
 
   let rec filter f = function
@@ -120,11 +109,10 @@ struct
       insert (f value) (union left' right')
   ;;
 
-  let rec equal t1 t2 =
-    match t1, t2 with
-    | Empty, Empty -> true
-    | Node (_, left1, value1, right1), Node (_, left2, value2, right2) ->
-      Ord.compare value1 value2 = 0 && equal left1 left2 && equal right1 right2
-    | _ -> false
-  ;;
+  let equal t1 t2 = 
+    let subset t1 t2 =
+      fold (fun acc x -> acc && member x t2) true t1
+    in
+    subset t1 t2 && subset t2 t1
+
 end

@@ -4,8 +4,8 @@ module StrSet = Rbset (String)
 module StandardIntSet = Set.Make (Int)
 module StandardStrSet = Set.Make (String)
 
-let test_strset_insert =
-  let open Alcotest in
+let test_strset_insert = 
+  let open Alcotest in 
   test_case "StrSet insert" `Quick (fun () ->
       let set = StrSet.empty in
       let set = StrSet.insert "hello" set in
@@ -99,8 +99,8 @@ let test_monoid_associativity =
     ~count:10
     (QCheck.triple arb_int_tree arb_int_tree arb_int_tree)
     (fun (t1, t2, t3) ->
-       let union1 = IntSet.associative_union t1 (IntSet.associative_union t2 t3) in
-       let union2 = IntSet.associative_union (IntSet.associative_union t1 t2) t3 in
+       let union1 = IntSet.union t1 (IntSet.union t2 t3) in
+       let union2 = IntSet.union (IntSet.union t1 t2) t3 in
        IntSet.equal union1 union2)
 ;;
 
