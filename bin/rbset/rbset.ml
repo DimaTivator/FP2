@@ -109,10 +109,36 @@ struct
       insert (f value) (union left' right')
   ;;
 
-  let equal t1 t2 = 
-    let subset t1 t2 =
-      fold (fun acc x -> acc && member x t2) true t1
-    in
-    subset t1 t2 && subset t2 t1
+  module Iterator = struct
+    type iterator = tree list
 
+    let rec leftmost path = function
+      | Empty -> path
+      | Node (_, left, value, right) ->
+        leftmost (Node (Black, Empty, value, right) :: path) left
+    ;;
+
+    (* Start from minimum *)
+    let init tree = leftmost [] tree
+
+    (* Next element in in-order traversal *)
+    let next = function
+      | [] -> None, []
+      | Node (_, _, value, right) :: rest ->
+        let new_stack = leftmost rest right in
+        Some value, new_stack
+      | _ -> failwith "Unexpected pattern"
+    ;;
+  end
+
+  let equal t1 t2 =
+    let rec loop iter1 iter2 =
+      match Iterator.next iter1, Iterator.next iter2 with
+      | (None, _), (None, _) -> true
+      | (Some v1, iter1'), (Some v2, iter2') when Ord.compare v1 v2 = 0 ->
+        loop iter1' iter2'
+      | _ -> false
+    in
+    loop (Iterator.init t1) (Iterator.init t2)
+  ;;
 end

@@ -4,25 +4,25 @@ module StrSet = Rbset (String)
 module StandardIntSet = Set.Make (Int)
 module StandardStrSet = Set.Make (String)
 
-let test_strset_insert = 
-  let open Alcotest in 
+let test_strset_insert =
+  let open Alcotest in
   test_case "StrSet insert" `Quick (fun () ->
-      let set = StrSet.empty in
-      let set = StrSet.insert "hello" set in
-      let set = StrSet.insert "world" set in
-      let set = StrSet.insert "ocaml" set in
-      check (list string) "same elements" ["hello"; "ocaml"; "world"] (StrSet.to_list set))
+    let set = StrSet.empty in
+    let set = StrSet.insert "hello" set in
+    let set = StrSet.insert "world" set in
+    let set = StrSet.insert "ocaml" set in
+    check (list string) "same elements" [ "hello"; "ocaml"; "world" ] (StrSet.to_list set))
 ;;
 
 let test_strset_remove =
   let open Alcotest in
   test_case "StrSet remove" `Quick (fun () ->
-      let set = StrSet.empty in
-      let set = StrSet.insert "hello" set in
-      let set = StrSet.insert "world" set in
-      let set = StrSet.insert "ocaml" set in
-      let set = StrSet.remove "world" set in
-      check (list string) "same elements" ["hello"; "ocaml"] (StrSet.to_list set))
+    let set = StrSet.empty in
+    let set = StrSet.insert "hello" set in
+    let set = StrSet.insert "world" set in
+    let set = StrSet.insert "ocaml" set in
+    let set = StrSet.remove "world" set in
+    check (list string) "same elements" [ "hello"; "ocaml" ] (StrSet.to_list set))
 ;;
 
 let arb_int_tree =
@@ -90,7 +90,8 @@ let test_monoid_identity =
     (fun tree ->
        let union_with_empty = IntSet.union tree IntSet.empty in
        let union_empty_with = IntSet.union IntSet.empty tree in
-       IntSet.equal tree union_with_empty && IntSet.equal tree union_empty_with)
+       IntSet.equal tree union_with_empty
+       && IntSet.equal tree union_empty_with)
 ;;
 
 let test_monoid_associativity =
@@ -147,9 +148,6 @@ let run_tests =
         ; QCheck_alcotest.to_alcotest test_monoid_associativity
         ; QCheck_alcotest.to_alcotest test_color_property
         ] )
-    ; ( "unit_tests"
-      , [ test_strset_insert
-        ; test_strset_remove
-        ] )
+    ; "unit_tests", [ test_strset_insert; test_strset_remove ]
     ]
 ;;
